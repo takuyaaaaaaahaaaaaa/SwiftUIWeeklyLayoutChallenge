@@ -7,4 +7,7 @@
 
 import SwiftUI
 
-public typealias ContentView = TopicXXXView
+@available(tvOS 14.0, *)
+@available(iOS 14.0, *)
+@available(watchOS 7.0, *)
+public typealias ContentView = Topic002View
