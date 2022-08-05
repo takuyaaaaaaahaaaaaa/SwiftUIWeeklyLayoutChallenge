@@ -40,6 +40,7 @@ struct DepartureSignal: View {
 
     var body: some View {
         List {
+            // 円形信号表示
             Section {
                 VStack(alignment: .center) {
                     HStack {
@@ -50,16 +51,35 @@ struct DepartureSignal: View {
                     LightCircleImage<Light_2>(selectLight: $viewModel.light_2)
                     LightCircleImage<Light_3>(selectLight: $viewModel.light_3)
                     LightCircleImage<Light_4>(selectLight: $viewModel.light_4)
-                }.padding([.top,.bottom], 15)
+                }.padding([.top, .bottom], 15)
             }
+
+            // テキスト信号表示
             Section {
                 HStack {
                     Spacer()
-                    Text(viewModel.signal)
-                        .font(.title).bold()
+                    Menu {
+                        Picker(selection: $viewModel.selectedSignal) {
+                            ForEach(Signal.allCases) {
+                                signal in
+                                Text(signal.rawValue)
+                                    .tag(signal)
+                                    .font(.title)
+                                    .foregroundColor(.black)
+                            }
+                        } label: {}
+                    } label: {
+                        Text(viewModel.signal)
+                            .font(.title)
+                            .foregroundColor(.black)
+                            .bold()
+                            .fixedSize()
+                    }
                     Spacer()
                 }
             }
+            
+            // ライト選択表示
             Section {
                 LightSelectCell<Light_1>(selectLight: $viewModel.light_1, allCases: Light_1.allCases)
                 LightSelectCell<Light_2>(selectLight: $viewModel.light_2, allCases: Light_2.allCases)
@@ -76,50 +96,6 @@ struct DepartureSignal: View {
     }
 }
 
-// MARK: Model
-// 信号パターン
-enum Signal: String, CaseIterable, Identifiable {
-    /// 上の灯火から順に 消・消・緑・消 で進行信号を現示。
-    case 出発進行
-    /// 上の灯火から順に 黄・消・消・緑 で減速信号を現示。
-    case 出発減速
-    /// 上の灯火から順に 消・消・消・黄 で注意信号を現示。
-    case 出発注意
-    /// 上の灯火から順に 黄・消・消・黄 で警戒信号を現示。
-    case 出発警戒
-    /// 上の灯火から順に 消・赤・消・消 で停止信号を現示。
-    case 出発停止
-
-    var id: String { rawValue }
-}
-
-// MARK: ViewModel
-// ViewModel
-class SignalViewModel: ObservableObject {
-    @Published var light_1: Light_1 = .off
-    @Published var light_2: Light_2 = .off
-    @Published var light_3: Light_3 = .off
-    @Published var light_4: Light_4 = .off
-
-    var signal: String {
-        switch (light_1, light_2, light_3, light_4) {
-        case (.off, .off, .greenOn, .off):
-            return Signal.出発進行.rawValue
-        case (.yellowOn, .off, .off, .greenOn):
-            return Signal.出発減速.rawValue
-        case (.off, .off, .off, .yellowOn):
-            return Signal.出発注意.rawValue
-        case (.yellowOn, .off, .off, .yellowOn):
-            return Signal.出発警戒.rawValue
-        case (.off, .redOn, .off, .off):
-            return Signal.出発警戒.rawValue
-        default:
-            return "--------"
-        }
-    }
-}
-
-// MARK: Presentation Logic
 // 円形画像
 struct LightCircleImage<S: SignalPickerPattern>: View {
     @Binding var selectLight: S
@@ -157,7 +133,7 @@ protocol SignalPickerPattern: CaseIterable, Identifiable, Hashable {
     var color: Color { get }
 }
 
-// 各ライトピッカーパターン
+// 各ライトの選択パターン
 enum Light_1: String, SignalPickerPattern {
     static var title: String { "灯1" }
 
@@ -235,6 +211,70 @@ enum Light_4: String, SignalPickerPattern {
     }
 
     var id: String { rawValue }
+}
+
+// MARK: Model
+
+// 信号パターン
+enum Signal: String, CaseIterable, Identifiable {
+    /// 上の灯火から順に 消・消・緑・消 で進行信号を現示。
+    case 出発進行
+    /// 上の灯火から順に 黄・消・消・緑 で減速信号を現示。
+    case 出発減速
+    /// 上の灯火から順に 消・消・消・黄 で注意信号を現示。
+    case 出発注意
+    /// 上の灯火から順に 黄・消・消・黄 で警戒信号を現示。
+    case 出発警戒
+    /// 上の灯火から順に 消・赤・消・消 で停止信号を現示。
+    case 出発停止
+
+    var id: String { rawValue }
+}
+
+// MARK: ViewModel
+
+class SignalViewModel: ObservableObject {
+    @Published var light_1: Light_1 = .off
+    @Published var light_2: Light_2 = .off
+    @Published var light_3: Light_3 = .off
+    @Published var light_4: Light_4 = .off
+    @Published var selectedSignal: Signal = .出発進行 {
+        didSet {
+            changeLight()
+        }
+    }
+
+    var signal: String {
+        switch (light_1, light_2, light_3, light_4) {
+        case (.off, .off, .greenOn, .off):
+            return Signal.出発進行.rawValue
+        case (.yellowOn, .off, .off, .greenOn):
+            return Signal.出発減速.rawValue
+        case (.off, .off, .off, .yellowOn):
+            return Signal.出発注意.rawValue
+        case (.yellowOn, .off, .off, .yellowOn):
+            return Signal.出発警戒.rawValue
+        case (.off, .redOn, .off, .off):
+            return Signal.出発警戒.rawValue
+        default:
+            return "--------"
+        }
+    }
+
+    func changeLight() {
+        switch selectedSignal {
+        case .出発進行:
+            (light_1, light_2, light_3, light_4) = (.off, .off, .greenOn, .off)
+        case .出発減速:
+            (light_1, light_2, light_3, light_4) = (.yellowOn, .off, .off, .greenOn)
+        case .出発注意:
+            (light_1, light_2, light_3, light_4) = (.off, .off, .off, .yellowOn)
+        case .出発警戒:
+            (light_1, light_2, light_3, light_4) = (.yellowOn, .off, .off, .yellowOn)
+        case .出発停止:
+            (light_1, light_2, light_3, light_4) = (.off, .redOn, .off, .off)
+        }
+    }
 }
 
 struct Topic003View_Previews: PreviewProvider {
