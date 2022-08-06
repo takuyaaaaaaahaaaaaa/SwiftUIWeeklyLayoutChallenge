@@ -29,7 +29,7 @@ extension Vital.Value {
         switch self {
         case .number(let value, let style, let customUnit):
             HStack {
-                if let customUnit {
+                if let customUnit = customUnit {
                     Text(String(Int(value))).valueModifier()
                     Text(customUnit).unitModifier()
                 } else if style == .percent {
