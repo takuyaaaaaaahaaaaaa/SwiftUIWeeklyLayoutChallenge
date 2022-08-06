@@ -255,7 +255,7 @@ class SignalViewModel: ObservableObject {
         case (.yellowOn, .off, .off, .yellowOn):
             return Signal.出発警戒.rawValue
         case (.off, .redOn, .off, .off):
-            return Signal.出発警戒.rawValue
+            return Signal.出発停止.rawValue
         default:
             return "--------"
         }
